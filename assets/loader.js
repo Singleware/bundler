@@ -8,7 +8,7 @@ var Loader;
   /**
    * All modules.
    */
-  const modules = '!MODULES!';
+  const modules = '%MODULES%';
 
   /**
    * All initialized modules.
