@@ -27,7 +27,7 @@ var Loader;
 
   /**
    * Gets the base path of the specified path.
-   * @param path Path.
+   * @param path Path of extraction.
    * @returns Returns the base path.
    */
   function dirname(path) {
@@ -36,8 +36,8 @@ var Loader;
   }
 
   /**
-   * Gets the normalized from the specified path.
-   * @param path Path.
+   * Gets the normalized path from the specified path.
+   * @param path Path to be normalized.
    * @return Returns the normalized path.
    */
   function normalize(path) {

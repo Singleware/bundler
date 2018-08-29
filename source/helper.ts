@@ -56,7 +56,7 @@ export class Helper {
    */
   @Class.Private()
   private static createLink(name: string, link: string): string {
-    return Helper.createEntry(name, true, `Object.assign(exports, require('${link}'));`);
+    return this.createEntry(name, true, `Object.assign(exports, require('${link}'));`);
   }
 
   /**
@@ -67,7 +67,7 @@ export class Helper {
   @Class.Private()
   private static async createModel(target: string, entries: string[]): Promise<void> {
     const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
-    const model = await Helper.readFile(path);
+    const model = await this.readFile(path);
     await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, `{${entries.join(',')}}`));
   }
 
@@ -79,13 +79,13 @@ export class Helper {
   @Class.Private()
   private static async loadFile(source: Source, entries: string[]): Promise<void> {
     if (Path.extname(<string>source.path) === '.js') {
-      const code = await Helper.readFile(<string>source.path);
+      const code = await this.readFile(<string>source.path);
       const file = Path.basename(source.name);
       if (file === 'index') {
-        entries.push(Helper.createEntry(source.name, false, code));
-        entries.push(Helper.createLink(Path.dirname(source.name), file));
+        entries.push(this.createEntry(source.name, false, code));
+        entries.push(this.createLink(Path.dirname(source.name), file));
       } else {
-        entries.push(Helper.createEntry(source.name, false, code));
+        entries.push(this.createEntry(source.name, false, code));
       }
     }
   }
@@ -97,14 +97,14 @@ export class Helper {
    */
   @Class.Private()
   private static async loadDirectory(source: Source, entries: string[]): Promise<void> {
-    const files = await Helper.readDirectory(source.path);
+    const files = await this.readDirectory(source.path);
     for (const file of files) {
       const path = Path.join(source.path, file);
       const stat = Fs.statSync(path);
       if (stat.isDirectory()) {
-        await Helper.loadDirectory({ name: `${source.name}/${file}`, path: path }, entries);
+        await this.loadDirectory({ name: `${source.name}/${file}`, path: path }, entries);
       } else if (stat.isFile()) {
-        await Helper.loadFile({ name: `${source.name}/${file.substr(0, file.length - 3)}`, path: path }, entries);
+        await this.loadFile({ name: `${source.name}/${file.substr(0, file.length - 3)}`, path: path }, entries);
       }
     }
   }
@@ -118,9 +118,9 @@ export class Helper {
   private static async loadPath(source: Source, entries: string[]): Promise<void> {
     const stat = Fs.statSync(source.path);
     if (stat.isDirectory()) {
-      await Helper.loadDirectory(source, entries);
+      await this.loadDirectory(source, entries);
     } else if (stat.isFile()) {
-      await Helper.loadFile(source, entries);
+      await this.loadFile(source, entries);
     }
   }
 
@@ -131,16 +131,16 @@ export class Helper {
    */
   @Class.Private()
   private static async loadPackage(source: Source, entries: string[], cache: Set<string>): Promise<void> {
-    const json = JSON.parse(await Helper.readFile(Path.join(source.path, 'package.json')));
+    const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
     const dependencies = json.dependencies || {};
     for (const name in dependencies) {
       if (!cache.has(name)) {
         cache.add(name);
-        await Helper.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+        await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
       }
     }
     if (json.main) {
-      await Helper.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+      await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
     }
   }
 
@@ -154,11 +154,11 @@ export class Helper {
     const cache = new Set<string>();
     for (const source of settings.sources) {
       if (source.package) {
-        await Helper.loadPackage(source, entries, cache);
+        await this.loadPackage(source, entries, cache);
       } else {
-        await Helper.loadPath(source, entries);
+        await this.loadPath(source, entries);
       }
     }
-    await Helper.createModel(settings.output, entries);
+    await this.createModel(settings.output, entries);
   }
 }

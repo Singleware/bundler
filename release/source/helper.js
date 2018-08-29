@@ -6,8 +6,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Helper_1;
-"use strict";
 /**
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
@@ -19,7 +17,7 @@ const Class = require("@singleware/class");
 /**
  * Helper class.
  */
-let Helper = Helper_1 = class Helper {
+let Helper = class Helper {
     /**
      * Read all content of the specified file path.
      * @param path Path.
@@ -53,7 +51,7 @@ let Helper = Helper_1 = class Helper {
      * @returns Returns the dependency entry code.
      */
     static createLink(name, link) {
-        return Helper_1.createEntry(name, true, `Object.assign(exports, require('${link}'));`);
+        return this.createEntry(name, true, `Object.assign(exports, require('${link}'));`);
     }
     /**
      * Create a model and write it into the target file.
@@ -62,7 +60,7 @@ let Helper = Helper_1 = class Helper {
      */
     static async createModel(target, entries) {
         const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
-        const model = await Helper_1.readFile(path);
+        const model = await this.readFile(path);
         await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, `{${entries.join(',')}}`));
     }
     /**
@@ -72,14 +70,14 @@ let Helper = Helper_1 = class Helper {
      */
     static async loadFile(source, entries) {
         if (Path.extname(source.path) === '.js') {
-            const code = await Helper_1.readFile(source.path);
+            const code = await this.readFile(source.path);
             const file = Path.basename(source.name);
             if (file === 'index') {
-                entries.push(Helper_1.createEntry(source.name, false, code));
-                entries.push(Helper_1.createLink(Path.dirname(source.name), file));
+                entries.push(this.createEntry(source.name, false, code));
+                entries.push(this.createLink(Path.dirname(source.name), file));
             }
             else {
-                entries.push(Helper_1.createEntry(source.name, false, code));
+                entries.push(this.createEntry(source.name, false, code));
             }
         }
     }
@@ -89,15 +87,15 @@ let Helper = Helper_1 = class Helper {
      * @param entries Output entries.
      */
     static async loadDirectory(source, entries) {
-        const files = await Helper_1.readDirectory(source.path);
+        const files = await this.readDirectory(source.path);
         for (const file of files) {
             const path = Path.join(source.path, file);
             const stat = Fs.statSync(path);
             if (stat.isDirectory()) {
-                await Helper_1.loadDirectory({ name: `${source.name}/${file}`, path: path }, entries);
+                await this.loadDirectory({ name: `${source.name}/${file}`, path: path }, entries);
             }
             else if (stat.isFile()) {
-                await Helper_1.loadFile({ name: `${source.name}/${file.substr(0, file.length - 3)}`, path: path }, entries);
+                await this.loadFile({ name: `${source.name}/${file.substr(0, file.length - 3)}`, path: path }, entries);
             }
         }
     }
@@ -109,10 +107,10 @@ let Helper = Helper_1 = class Helper {
     static async loadPath(source, entries) {
         const stat = Fs.statSync(source.path);
         if (stat.isDirectory()) {
-            await Helper_1.loadDirectory(source, entries);
+            await this.loadDirectory(source, entries);
         }
         else if (stat.isFile()) {
-            await Helper_1.loadFile(source, entries);
+            await this.loadFile(source, entries);
         }
     }
     /**
@@ -121,16 +119,16 @@ let Helper = Helper_1 = class Helper {
      * @param entries Output entries.
      */
     static async loadPackage(source, entries, cache) {
-        const json = JSON.parse(await Helper_1.readFile(Path.join(source.path, 'package.json')));
+        const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
         const dependencies = json.dependencies || {};
         for (const name in dependencies) {
             if (!cache.has(name)) {
                 cache.add(name);
-                await Helper_1.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+                await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
             }
         }
         if (json.main) {
-            await Helper_1.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+            await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
         }
     }
     /**
@@ -142,13 +140,13 @@ let Helper = Helper_1 = class Helper {
         const cache = new Set();
         for (const source of settings.sources) {
             if (source.package) {
-                await Helper_1.loadPackage(source, entries, cache);
+                await this.loadPackage(source, entries, cache);
             }
             else {
-                await Helper_1.loadPath(source, entries);
+                await this.loadPath(source, entries);
             }
         }
-        await Helper_1.createModel(settings.output, entries);
+        await this.createModel(settings.output, entries);
     }
 };
 __decorate([
@@ -181,7 +179,7 @@ __decorate([
 __decorate([
     Class.Public()
 ], Helper, "compile", null);
-Helper = Helper_1 = __decorate([
+Helper = __decorate([
     Class.Describe()
 ], Helper);
 exports.Helper = Helper;
