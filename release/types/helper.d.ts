@@ -1,8 +1,9 @@
+import * as Class from '@singleware/class';
 import { Settings } from './settings';
 /**
  * Helper class.
  */
-export declare class Helper {
+export declare class Helper extends Class.Null {
     /**
      * Read all content of the specified file path.
      * @param path Path.

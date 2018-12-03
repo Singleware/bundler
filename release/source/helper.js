@@ -17,7 +17,7 @@ const Class = require("@singleware/class");
 /**
  * Helper class.
  */
-let Helper = class Helper {
+let Helper = class Helper extends Class.Null {
     /**
      * Read all content of the specified file path.
      * @param path Path.

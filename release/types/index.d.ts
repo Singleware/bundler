@@ -1,6 +1,6 @@
+import { Settings } from './settings';
 /**
- * Copyright (C) 2018 Silas B. Domingos
- * This source code is licensed under the MIT License as described in the file LICENSE.
+ * Compile all specified sources according to the provided settings.
+ * @param settings Compiler settings.
  */
-import { Helper } from './helper';
-export declare const compile: typeof Helper.compile;
+export declare const compile: (settings: Settings) => Promise<void>;

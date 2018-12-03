@@ -15,7 +15,7 @@ import { Source } from './source';
  * Helper class.
  */
 @Class.Describe()
-export class Helper {
+export class Helper extends Class.Null {
   /**
    * Read all content of the specified file path.
    * @param path Path.
