@@ -7,14 +7,12 @@
   "name": "@singleware/bundler",
   "description": "Singleware bundler package.",
   "license": "MIT",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "main": "release/source/index.js",
   "types": "release/types/index.d.ts",
   "keywords": [
     "js bundler",
-    "js joiner",
-    "async bundler",
-    "async joiner"
+    "package bundler"
   ],
   "repository": {
     "type": "git",
@@ -38,8 +36,9 @@
     "semi": true
   },
   "scripts": {
+    "start": "node ./release/examples/basic.js",
     "build": "npm run make && npm run update",
-    "make": "tsc",
+    "make": "npx tsc -p ./source",
     "update": "cp -Rf ./source/*.d.ts ./release/types"
   }
 }
