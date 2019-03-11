@@ -1,19 +1,19 @@
-/**
- * Copyright (C) 2018 Silas B. Domingos
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 'use strict';
 var Loader;
 (function(Loader) {
   /**
-   * All modules.
-   */
-  const modules = '%MODULES%';
-
-  /**
    * All initialized modules.
    */
   const cache = {};
+
+  /**
+   * All modules repository.
+   */
+  const repository = '%MODULES%';
 
   /**
    * Determines whether the specified path is relative or not.
@@ -26,9 +26,9 @@ var Loader;
   }
 
   /**
-   * Gets the base path of the specified path.
+   * Gets the directory name of the specified path.
    * @param path Path of extraction.
-   * @returns Returns the base path.
+   * @returns Returns the directory name.
    */
   function dirname(path) {
     const output = normalize(path).split('/');
@@ -62,21 +62,39 @@ var Loader;
    * @returns Returns all exported members.
    */
   function loadModule(path) {
-    const module = modules[path];
-    if (!module) {
-      throw new Error(`Module "${path}" does not found.`);
-    }
-    const exports = {};
+    const module = repository[path];
     const current = Loader.baseDirectory;
+    const exports = {};
+    let caught;
     try {
       Loader.baseDirectory = module.pack ? path : dirname(path);
-      module.invoke(exports, Loader.require);
+      module.invoke(exports, require);
     } catch (exception) {
-      throw exception;
+      caught = exception;
     } finally {
       Loader.baseDirectory = current;
+      if (caught) {
+        throw caught;
+      }
       return exports;
     }
+  }
+
+  /**
+   * Requires the module that corresponds to the specified path.
+   * @param path Module path.
+   * @returns Returns all exported members.
+   * @throws Throws an error when the specified module does not exists.
+   */
+  function require(path) {
+    const module = normalize(relative(path) ? `${Loader.baseDirectory}/${path}` : path);
+    if (!cache[module]) {
+      if (!repository[module]) {
+        throw new Error(`Module "${path}" does not found.`);
+      }
+      cache[module] = loadModule(module);
+    }
+    return cache[module];
   }
 
   /**
@@ -84,21 +102,8 @@ var Loader;
    */
   Loader.baseDirectory = '.';
 
-  /**
-   * Requires the module that corresponds to the specified path.
-   * @param path Module path.
-   * @returns Returns all exported members.
-   */
-  Loader.require = path => {
-    const module = normalize(relative(path) ? `${Loader.baseDirectory}/${path}` : path);
-    if (!cache[module]) {
-      cache[module] = loadModule(module);
-    }
-    return cache[module];
-  };
-
   // Setups the require method.
   if (!window.require) {
-    window.require = Loader.require;
+    window.require = require;
   }
 })(Loader || (Loader = {}));
