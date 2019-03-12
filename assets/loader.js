@@ -6,9 +6,14 @@
 var Loader;
 (function(Loader) {
   /**
-   * All initialized modules.
+   * All loaded modules.
    */
   const cache = {};
+
+  /**
+   * All loading locations.
+   */
+  const loading = [];
 
   /**
    * All modules repository.
@@ -21,8 +26,7 @@ var Loader;
    * @returns Returns the base path.
    */
   function relative(path) {
-    const char = path.substr(0, 1);
-    return char !== '/' && char !== '@';
+    return path[0] !== '/' && path[0] !== '@';
   }
 
   /**
@@ -57,22 +61,24 @@ var Loader;
   }
 
   /**
-   * Loads the module that corresponds to the specified path.
-   * @param path Module path.
+   * Loads the module that corresponds to the specified location.
+   * @param location Module location.
    * @returns Returns all exported members.
    */
-  function loadModule(path) {
-    const module = repository[path];
+  function loadModule(location) {
+    const module = repository[location];
     const current = Loader.baseDirectory;
     const exports = {};
     let caught;
     try {
-      Loader.baseDirectory = module.pack ? path : dirname(path);
+      Loader.baseDirectory = module.pack ? location : dirname(location);
+      loading.push(location);
       module.invoke(exports, require);
     } catch (exception) {
       caught = exception;
     } finally {
       Loader.baseDirectory = current;
+      loading.pop();
       if (caught) {
         throw caught;
       }
@@ -87,14 +93,18 @@ var Loader;
    * @throws Throws an error when the specified module does not exists.
    */
   function require(path) {
-    const module = normalize(relative(path) ? `${Loader.baseDirectory}/${path}` : path);
-    if (!cache[module]) {
-      if (!repository[module]) {
-        throw new Error(`Module "${path}" does not found.`);
+    const location = normalize(relative(path) ? `${Loader.baseDirectory}/${path}` : path);
+    if (!cache[location]) {
+      const current = loading[loading.length - 1] || '.';
+      if (!repository[location]) {
+        throw new Error(`Module "${path}" loaded by "${current}" does not found.`);
       }
-      cache[module] = loadModule(module);
+      if (loading.includes(location)) {
+        throw new Error(`Module "${current}" with circular reference to module "${path}"`);
+      }
+      cache[location] = loadModule(location);
     }
-    return cache[module];
+    return cache[location];
   }
 
   /**
