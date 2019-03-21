@@ -7,7 +7,7 @@
   "name": "@singleware/bundler",
   "description": "Singleware bundler package.",
   "license": "MIT",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "main": "release/source/index.js",
   "types": "release/types/index.d.ts",
   "keywords": [

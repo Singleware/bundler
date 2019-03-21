@@ -68,7 +68,7 @@ export class Helper extends Class.Null {
   private static async createModel(target: string, entries: string[]): Promise<void> {
     const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
     const model = await this.readFile(path);
-    await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, `{${entries.join(',')}}`));
+    await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(',')}}`));
   }
 
   /**

@@ -61,7 +61,7 @@ let Helper = class Helper extends Class.Null {
     static async createModel(target, entries) {
         const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
         const model = await this.readFile(path);
-        await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, `{${entries.join(',')}}`));
+        await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(',')}}`));
     }
     /**
      * Load the specified file and insert a new entry if the provided file is valid.
