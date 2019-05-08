@@ -1,4 +1,4 @@
-/*
+/*!
  * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
@@ -45,7 +45,7 @@ export class Helper extends Class.Null {
    */
   @Class.Private()
   private static createEntry(name: string, pack: boolean, code: string): string {
-    return `"${name}":{pack:${pack ? 'true' : 'false'}, invoke:function(exports, require){${code}}}`;
+    return `"${name}":{pack:${pack ? 'true' : 'false'}, invoke:function(exports, require){\n${code}\n}}`;
   }
 
   /**
@@ -68,7 +68,7 @@ export class Helper extends Class.Null {
   private static async createModel(target: string, entries: string[]): Promise<void> {
     const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
     const model = await this.readFile(path);
-    await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(',')}}`));
+    await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(`,\n`)}}`));
   }
 
   /**
@@ -131,16 +131,18 @@ export class Helper extends Class.Null {
    */
   @Class.Private()
   private static async loadPackage(source: Source, entries: string[], cache: Set<string>): Promise<void> {
-    const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
-    const dependencies = json.dependencies || {};
-    for (const name in dependencies) {
-      if (!cache.has(name)) {
-        cache.add(name);
-        await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+    if (!cache.has(source.name)) {
+      const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
+      const dependencies = json.dependencies || {};
+      for (const name in dependencies) {
+        if (!cache.has(name)) {
+          await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+        }
       }
-    }
-    if (json.main) {
-      await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+      if (json.main) {
+        cache.add(source.name);
+        await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+      }
     }
   }
 

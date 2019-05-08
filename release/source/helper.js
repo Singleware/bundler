@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/*
+/*!
  * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
@@ -42,7 +42,7 @@ let Helper = class Helper extends Class.Null {
      * @returns Returns the dependency entry code.
      */
     static createEntry(name, pack, code) {
-        return `"${name}":{pack:${pack ? 'true' : 'false'}, invoke:function(exports, require){${code}}}`;
+        return `"${name}":{pack:${pack ? 'true' : 'false'}, invoke:function(exports, require){\n${code}\n}}`;
     }
     /**
      * Creates a dependency link to another dependency.
@@ -61,7 +61,7 @@ let Helper = class Helper extends Class.Null {
     static async createModel(target, entries) {
         const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
         const model = await this.readFile(path);
-        await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(',')}}`));
+        await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(`,\n`)}}`));
     }
     /**
      * Load the specified file and insert a new entry if the provided file is valid.
@@ -119,16 +119,18 @@ let Helper = class Helper extends Class.Null {
      * @param entries Output entries.
      */
     static async loadPackage(source, entries, cache) {
-        const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
-        const dependencies = json.dependencies || {};
-        for (const name in dependencies) {
-            if (!cache.has(name)) {
-                cache.add(name);
-                await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+        if (!cache.has(source.name)) {
+            const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
+            const dependencies = json.dependencies || {};
+            for (const name in dependencies) {
+                if (!cache.has(name)) {
+                    await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+                }
             }
-        }
-        if (json.main) {
-            await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+            if (json.main) {
+                cache.add(source.name);
+                await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+            }
         }
     }
     /**
