@@ -7,7 +7,7 @@
   "name": "@singleware/bundler",
   "description": "Singleware bundler package.",
   "license": "MIT",
-  "version": "1.0.24",
+  "version": "1.0.28",
   "main": "release/source/index.js",
   "types": "release/types/index.d.ts",
   "keywords": [
@@ -22,15 +22,15 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@singleware/class": "^1.1.14"
+    "@singleware/class": "^1.1.19"
   },
   "devDependencies": {
-    "prettier": "^1.15.3",
-    "typescript": "^2.9.2",
-    "@types/node": "^10.12.11"
+    "@types/node": "^13.7.0",
+    "prettier": "^1.19.1",
+    "typescript": "^3.7.5"
   },
   "prettier": {
-    "printWidth": 140,
+    "printWidth": 125,
     "tabWidth": 2,
     "singleQuote": true,
     "semi": true

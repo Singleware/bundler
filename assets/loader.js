@@ -1,47 +1,42 @@
-/*
- * Copyright (C) 2018-2019 Silas B. Domingos
+/*!
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 'use strict';
 var Loader;
 (function(Loader) {
   /**
-   * All loaded modules.
+   * Loaded modules.
    */
   const cache = {};
-
   /**
-   * All loading locations.
+   * Modules repository.
+   */
+  const repository = {};
+  /**
+   * Loading locations.
    */
   const loading = [];
-
   /**
-   * All modules repository.
-   */
-  const repository = '%MODULES%';
-
-  /**
-   * Determines whether the specified path is relative or not.
+   * Determines whether or not the specified path is relative.
    * @param path Path.
    * @returns Returns the base path.
    */
   function relative(path) {
     return path[0] !== '/' && path[0] !== '@';
   }
-
   /**
-   * Gets the directory name of the specified path.
-   * @param path Path of extraction.
+   * Get the directory name of the specified path.
+   * @param path Path.
    * @returns Returns the directory name.
    */
   function dirname(path) {
     const output = normalize(path).split('/');
     return output.splice(0, output.length - 1).join('/');
   }
-
   /**
-   * Gets the normalized path from the specified path.
-   * @param path Path to be normalized.
+   * Get the normalized path from the specified path.
+   * @param path Path.
    * @return Returns the normalized path.
    */
   function normalize(path) {
@@ -59,16 +54,15 @@ var Loader;
     }
     return output.join('/');
   }
-
   /**
-   * Loads the module that corresponds to the specified location.
+   * Load the module that corresponds to the specified location.
    * @param location Module location.
    * @returns Returns all exported members.
    */
   function loadModule(location) {
-    const module = repository[location];
+    const exports = cache[location];
     const current = Loader.baseDirectory;
-    const exports = {};
+    const module = repository[location];
     let caught;
     try {
       Loader.baseDirectory = module.pack ? location : dirname(location);
@@ -85,35 +79,61 @@ var Loader;
       return exports;
     }
   }
-
   /**
-   * Requires the module that corresponds to the specified path.
+   * Require the module that corresponds to the specified path.
    * @param path Module path.
    * @returns Returns all exported members.
-   * @throws Throws an error when the specified module does not exists.
+   * @throws Throws an error when the specified module doesn't exists.
    */
   function require(path) {
     const location = normalize(relative(path) ? `${Loader.baseDirectory}/${path}` : path);
     if (!cache[location]) {
-      const current = loading[loading.length - 1] || '.';
       if (!repository[location]) {
-        throw new Error(`Module "${path}" loaded by "${current}" does not found.`);
+        const current = loading[loading.length - 1] || '.';
+        throw new Error(`Module "${path}" required by "${current}" doesn't found.`);
       }
-      if (loading.includes(location)) {
-        throw new Error(`Module "${current}" with circular reference to module "${path}"`);
-      }
-      cache[location] = loadModule(location);
+      cache[location] = {};
+      return loadModule(location);
     }
     return cache[location];
   }
-
   /**
-   * Global base directory.
+   * Register new modules into the loader.
+   * @param modules Modules object.
    */
-  Loader.baseDirectory = '.';
-
-  // Setups the require method.
-  if (!window.require) {
-    window.require = require;
+  function register(modules) {
+    for (const entry in modules) {
+      if (!(entry in repository)) {
+        repository[entry] = modules[entry];
+      }
+    }
   }
+  // Setup the loader.
+  if (!window.require) {
+    // Set the default directory.
+    Loader.baseDirectory = '.';
+    // Set all properties.
+    Object.defineProperties(window, {
+      require: {
+        value: require,
+        configurable: false,
+        writable: false
+      },
+      Loader: {
+        value: Loader,
+        configurable: false,
+        writable: false
+      }
+    });
+  }
+  // Set the loader method.
+  Object.defineProperties(Loader, {
+    register: {
+      value: register,
+      configurable: false,
+      writable: false
+    }
+  });
+  // Register all modules.
+  window.Loader.register('%MODULES%');
 })(Loader || (Loader = {}));

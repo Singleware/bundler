@@ -134,13 +134,11 @@ export class Helper extends Class.Null {
     if (!cache.has(source.name)) {
       const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
       const dependencies = json.dependencies || {};
+      cache.add(source.name);
       for (const name in dependencies) {
-        if (!cache.has(name)) {
-          await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
-        }
+        await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
       }
       if (json.main) {
-        cache.add(source.name);
         await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
       }
     }
