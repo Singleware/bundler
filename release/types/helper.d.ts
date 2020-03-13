@@ -33,32 +33,33 @@ export declare class Helper extends Class.Null {
     private static createLink;
     /**
      * Create a model and write it into the target file.
-     * @param target Target file.
      * @param entries Input entries.
+     * @param target Target file.
      */
     private static createModel;
     /**
-     * Load the specified file and insert a new entry if the provided file is valid.
-     * @param source Source information.
+     * Load the specified file and insert a new entry if the given file is valid.
      * @param entries Output entries.
+     * @param source Source object.
      */
     private static loadFile;
     /**
      * Load the all files from the specified directory and insert all valid output entries.
-     * @param source Source information.
      * @param entries Output entries.
+     * @param source Source object.
      */
     private static loadDirectory;
     /**
      * Load all valid files and directories and insert all valid output entries.
-     * @param source Source information.
      * @param entries Output entries.
+     * @param source Source object.
      */
     private static loadPath;
     /**
      * Load the specified package.json and insert all valid output entries.
-     * @param source Source information.
+     * @param source Source object.
      * @param entries Output entries.
+     * @param cache Loaded packages cache. (To prevent circular calling)
      */
     private static loadPackage;
     /**

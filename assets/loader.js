@@ -9,22 +9,17 @@ var Loader;
    * Loaded modules.
    */
   const cache = {};
+
   /**
    * Modules repository.
    */
   const repository = {};
+
   /**
    * Loading locations.
    */
   const loading = [];
-  /**
-   * Determines whether or not the specified path is relative.
-   * @param path Path.
-   * @returns Returns the base path.
-   */
-  function relative(path) {
-    return path[0] !== '/' && path[0] !== '@';
-  }
+
   /**
    * Get the directory name of the specified path.
    * @param path Path.
@@ -34,6 +29,7 @@ var Loader;
     const output = normalize(path).split('/');
     return output.splice(0, output.length - 1).join('/');
   }
+
   /**
    * Get the normalized path from the specified path.
    * @param path Path.
@@ -54,31 +50,39 @@ var Loader;
     }
     return output.join('/');
   }
+
   /**
    * Load the module that corresponds to the specified location.
    * @param location Module location.
    * @returns Returns all exported members.
    */
   function loadModule(location) {
-    const exports = cache[location];
-    const current = Loader.baseDirectory;
-    const module = repository[location];
+    const baseDir = Loader.baseDirectory;
+    const source = repository[location];
+    const module = {
+      loaded: false,
+      filename: location,
+      path: dirname(location),
+      exports: cache[location]
+    };
     let caught;
     try {
-      Loader.baseDirectory = module.pack ? location : dirname(location);
+      Loader.baseDirectory = source.pack ? module.filename : module.path;
       loading.push(location);
-      module.invoke(exports, require);
+      source.invoke(module, module.exports, require);
+      module.loaded = true;
     } catch (exception) {
       caught = exception;
     } finally {
-      Loader.baseDirectory = current;
+      Loader.baseDirectory = baseDir;
       loading.pop();
       if (caught) {
         throw caught;
       }
-      return exports;
+      return module.exports;
     }
   }
+
   /**
    * Require the module that corresponds to the specified path.
    * @param path Module path.
@@ -86,7 +90,8 @@ var Loader;
    * @throws Throws an error when the specified module doesn't exists.
    */
   function require(path) {
-    const location = normalize(relative(path) ? `${Loader.baseDirectory}/${path}` : path);
+    const relative = path[0] === '.';
+    const location = normalize(relative ? `${Loader.baseDirectory}/${path}` : path);
     if (!cache[location]) {
       if (!repository[location]) {
         const current = loading[loading.length - 1] || '.';
@@ -97,6 +102,7 @@ var Loader;
     }
     return cache[location];
   }
+
   /**
    * Register new modules into the loader.
    * @param modules Modules object.
@@ -108,6 +114,7 @@ var Loader;
       }
     }
   }
+
   // Setup the loader.
   if (!window.require) {
     // Set the default directory.
@@ -126,6 +133,7 @@ var Loader;
       }
     });
   }
+
   // Set the loader method.
   Object.defineProperties(Loader, {
     register: {
@@ -134,6 +142,7 @@ var Loader;
       writable: false
     }
   });
+
   // Register all modules.
   window.Loader.register('%MODULES%');
 })(Loader || (Loader = {}));

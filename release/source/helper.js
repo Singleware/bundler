@@ -42,7 +42,7 @@ let Helper = class Helper extends Class.Null {
      * @returns Returns the dependency entry code.
      */
     static createEntry(name, pack, code) {
-        return `"${name}":{pack:${pack ? 'true' : 'false'}, invoke:function(exports, require){\n${code}\n}}`;
+        return `"${name}":{pack:${pack ? 'true' : 'false'}, invoke:function(module, exports, require){\n${code}\n}}`;
     }
     /**
      * Creates a dependency link to another dependency.
@@ -51,24 +51,24 @@ let Helper = class Helper extends Class.Null {
      * @returns Returns the dependency entry code.
      */
     static createLink(name, link) {
-        return this.createEntry(name, true, `Object.assign(exports, require('${link}'));`);
+        return this.createEntry(name, true, `Object.assign(exports, require('./${link}'));`);
     }
     /**
      * Create a model and write it into the target file.
-     * @param target Target file.
      * @param entries Input entries.
+     * @param target Target file.
      */
-    static async createModel(target, entries) {
+    static async createModel(entries, target) {
         const path = Path.join(Path.dirname(Path.dirname(__dirname)), '/assets/loader.js');
-        const model = await this.readFile(path);
-        await Util.promisify(Fs.writeFile)(target, model.replace(`'%MODULES%'`, () => `{${entries.join(`,\n`)}}`));
+        const bundle = (await this.readFile(path)).replace(`'%MODULES%'`, () => `{${entries.join(`,\n`)}}`);
+        await Util.promisify(Fs.writeFile)(target, bundle);
     }
     /**
-     * Load the specified file and insert a new entry if the provided file is valid.
-     * @param source Source information.
+     * Load the specified file and insert a new entry if the given file is valid.
      * @param entries Output entries.
+     * @param source Source object.
      */
-    static async loadFile(source, entries) {
+    static async loadFile(entries, source) {
         if (Path.extname(source.path) === '.js') {
             const code = await this.readFile(source.path);
             const file = Path.basename(source.name);
@@ -83,51 +83,65 @@ let Helper = class Helper extends Class.Null {
     }
     /**
      * Load the all files from the specified directory and insert all valid output entries.
-     * @param source Source information.
      * @param entries Output entries.
+     * @param source Source object.
      */
-    static async loadDirectory(source, entries) {
+    static async loadDirectory(entries, source) {
         const files = await this.readDirectory(source.path);
         for (const file of files) {
             const path = Path.join(source.path, file);
             const stat = Fs.statSync(path);
             if (stat.isDirectory()) {
-                await this.loadDirectory({ name: `${source.name}/${file}`, path: path }, entries);
+                await this.loadDirectory(entries, {
+                    name: `${source.name}/${file}`,
+                    path: path
+                });
             }
             else if (stat.isFile()) {
-                await this.loadFile({ name: `${source.name}/${file.substr(0, file.length - 3)}`, path: path }, entries);
+                await this.loadFile(entries, {
+                    name: `${source.name}/${file.substr(0, file.length - 3)}`,
+                    path: path
+                });
             }
         }
     }
     /**
      * Load all valid files and directories and insert all valid output entries.
-     * @param source Source information.
      * @param entries Output entries.
+     * @param source Source object.
      */
-    static async loadPath(source, entries) {
+    static async loadPath(entries, source) {
         const stat = Fs.statSync(source.path);
         if (stat.isDirectory()) {
-            await this.loadDirectory(source, entries);
+            await this.loadDirectory(entries, source);
         }
         else if (stat.isFile()) {
-            await this.loadFile(source, entries);
+            await this.loadFile(entries, source);
         }
     }
     /**
      * Load the specified package.json and insert all valid output entries.
-     * @param source Source information.
+     * @param source Source object.
      * @param entries Output entries.
+     * @param cache Loaded packages cache. (To prevent circular calling)
      */
-    static async loadPackage(source, entries, cache) {
+    static async loadPackage(entries, cache, source) {
         if (!cache.has(source.name)) {
             const json = JSON.parse(await this.readFile(Path.join(source.path, 'package.json')));
             const dependencies = json.dependencies || {};
             cache.add(source.name);
             for (const name in dependencies) {
-                await this.loadPackage({ name: name, path: `node_modules/${name}`, package: true }, entries, cache);
+                await this.loadPackage(entries, cache, {
+                    name: name,
+                    path: `node_modules/${name}`,
+                    package: true
+                });
             }
             if (json.main) {
-                await this.loadDirectory({ name: source.name, path: Path.join(source.path, Path.dirname(json.main)) }, entries);
+                await this.loadDirectory(entries, {
+                    name: source.name,
+                    path: Path.join(source.path, Path.dirname(json.main))
+                });
             }
         }
     }
@@ -140,13 +154,13 @@ let Helper = class Helper extends Class.Null {
         const cache = new Set();
         for (const source of settings.sources) {
             if (source.package) {
-                await this.loadPackage(source, entries, cache);
+                await this.loadPackage(entries, cache, source);
             }
             else {
-                await this.loadPath(source, entries);
+                await this.loadPath(entries, source);
             }
         }
-        await this.createModel(settings.output, entries);
+        await this.createModel(entries, settings.output);
     }
 };
 __decorate([
