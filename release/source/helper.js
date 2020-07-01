@@ -6,6 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Helper = void 0;
 /*!
  * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
@@ -69,10 +70,12 @@ let Helper = class Helper extends Class.Null {
      * @param source Source object.
      */
     static async loadFile(entries, source) {
-        if (Path.extname(source.path) === '.js') {
+        var _a;
+        const ext = Path.extname(source.path).toLowerCase();
+        if (ext === '.js' || ext === '.cjs' || ext === '.mjs') {
             const code = await this.readFile(source.path);
             const file = Path.basename(source.name);
-            if (file === 'index') {
+            if (file === ((_a = source.index) !== null && _a !== void 0 ? _a : 'index')) {
                 entries.push(this.createEntry(source.name, false, code));
                 entries.push(this.createLink(Path.dirname(source.name), file));
             }
@@ -98,8 +101,10 @@ let Helper = class Helper extends Class.Null {
                 });
             }
             else if (stat.isFile()) {
+                const ext = Path.extname(file);
                 await this.loadFile(entries, {
-                    name: `${source.name}/${file.substr(0, file.length - 3)}`,
+                    name: `${source.name}/${file.substr(0, file.length - ext.length)}`,
+                    index: source.index,
                     path: path
                 });
             }
@@ -140,6 +145,7 @@ let Helper = class Helper extends Class.Null {
             if (json.main) {
                 await this.loadDirectory(entries, {
                     name: source.name,
+                    index: Path.basename(json.main, Path.extname(json.main)),
                     path: Path.join(source.path, Path.dirname(json.main))
                 });
             }

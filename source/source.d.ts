@@ -16,6 +16,11 @@ export interface Source {
    */
   path: string;
   /**
+   * Optional index filename without extension.
+   * Only applied for directories.
+   */
+  index?: string;
+  /**
    * Determines whether the source is a package or not.
    */
   package?: boolean;

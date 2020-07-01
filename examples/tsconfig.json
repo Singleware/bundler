@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "commonjs",
+    "target": "ES2019",
+    "module": "CommonJS",
+    "newLine": "lf",
     "strict": true,
+    "incremental": true,
+    "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
-    "suppressExcessPropertyErrors": true,
     "outDir": "../release/"
   },
-  "include": ["./**/*"]
+  "include": [
+    "./**/*"
+  ]
 }

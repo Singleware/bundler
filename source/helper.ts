@@ -78,10 +78,11 @@ export class Helper extends Class.Null {
    */
   @Class.Private()
   private static async loadFile(entries: string[], source: Source): Promise<void> {
-    if (Path.extname(<string>source.path) === '.js') {
-      const code = await this.readFile(<string>source.path);
+    const ext = Path.extname(source.path).toLowerCase();
+    if (ext === '.js' || ext === '.cjs' || ext === '.mjs') {
+      const code = await this.readFile(source.path);
       const file = Path.basename(source.name);
-      if (file === 'index') {
+      if (file === (source.index ?? 'index')) {
         entries.push(this.createEntry(source.name, false, code));
         entries.push(this.createLink(Path.dirname(source.name), file));
       } else {
@@ -107,8 +108,10 @@ export class Helper extends Class.Null {
           path: path
         });
       } else if (stat.isFile()) {
+        const ext = Path.extname(file);
         await this.loadFile(entries, {
-          name: `${source.name}/${file.substr(0, file.length - 3)}`,
+          name: `${source.name}/${file.substr(0, file.length - ext.length)}`,
+          index: source.index,
           path: path
         });
       }
@@ -152,6 +155,7 @@ export class Helper extends Class.Null {
       if (json.main) {
         await this.loadDirectory(entries, {
           name: source.name,
+          index: Path.basename(json.main, Path.extname(json.main)),
           path: Path.join(source.path, Path.dirname(json.main))
         });
       }
